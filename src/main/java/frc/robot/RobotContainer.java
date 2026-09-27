@@ -7,11 +7,13 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Telemetry;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -22,10 +24,13 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 public class RobotContainer {
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-
+    private final CommandSwerveDrivetrain m_Swerve = TunerConstants.createDrivetrain();
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1)
+            .withDriveRequestType(com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType.OpenLoopVoltage);
+    private final Telemetry m_telemetry = new Telemetry(MaxSpeed);
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController m_driverController =
-      new CommandXboxController(0);
+  private final CommandXboxController m_driverController = new CommandXboxController(0);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -43,7 +48,15 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+
+    
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
+    m_Swerve.setDefaultCommand(
+      // m_Swerve will execute this command periodically
+      m_Swerve.applyRequest(() -> drive.withVelocityX(-m_driverController.getLeftY() * MaxSpeed) // Drive
+              .withVelocityY(-m_driverController.getLeftX() * MaxSpeed) // Drive left with negative X
+              .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise                                                                                              // with
+      ));
 
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
@@ -58,5 +71,9 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return Commands.idle();
+  }
+
+  public void periodic(){
+    m_telemetry.telemeterize(m_Swerve.getState());
   }
 }
