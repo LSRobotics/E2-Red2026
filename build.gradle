@@ -2,7 +2,11 @@ plugins {
     id "java"
     id "edu.wpi.first.GradleRIO" version "2026.2.1"
 }
-
+repositories {
+    mavenCentral()
+    maven { url "https://frcmaven.wpi.edu/artifactory/ex-mvn" }
+    maven { url "https://frcmaven.wpi.edu/artifactory/littletonrobotics-mvn-release/" }
+}
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -57,6 +61,7 @@ dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
 
+    annotationProcessor "org.littletonrobotics.akit:akit-autolog:26.0.2"
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
 

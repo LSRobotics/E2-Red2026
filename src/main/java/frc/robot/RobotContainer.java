@@ -20,11 +20,14 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.shooter.Shooter;
+
 
 public class RobotContainer {
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private final CommandSwerveDrivetrain m_Swerve = TunerConstants.createDrivetrain();
+    private final Shooter m_Shooter = new Shooter();
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1)
             .withDriveRequestType(com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType.OpenLoopVoltage);
@@ -48,14 +51,18 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    m_driverController.rightBumper()
+        .whileTrue(m_Shooter.startShootingCommand())
+        .whileFalse(m_Shooter.stopShootingCommand());
 
-    
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     m_Swerve.setDefaultCommand(
       // m_Swerve will execute this command periodically
       m_Swerve.applyRequest(() -> drive.withVelocityX(-m_driverController.getLeftY() * MaxSpeed) // Drive
               .withVelocityY(-m_driverController.getLeftX() * MaxSpeed) // Drive left with negative X
-              .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise                                                                                              // with
+              .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise    
+              
+      
       ));
 
 
