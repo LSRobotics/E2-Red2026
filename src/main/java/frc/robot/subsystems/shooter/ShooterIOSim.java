@@ -1,7 +1,8 @@
 package frc.robot.subsystems.shooter;
 
+import static frc.robot.subsystems.shooter.ShooterConstants.*;
+
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
@@ -10,17 +11,17 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class ShooterIOSim implements ShooterIO {
-  private static final double GEAR_REDUCTION = 1.0;
   private static final double SIM_UPDATE_INTERVAL = 0.020; // 20ms loop cycle
 
+  // Physics model using Neo Vortex / TalonFX motor properties
   private final LinearSystem<N2, N1, N2> plant =
-      LinearSystemId.createDCMotorSystem(DCMotor.getNeoVortex(1), 0.001, GEAR_REDUCTION);
+      LinearSystemId.createDCMotorSystem(DCMotor.getNeoVortex(1), 0.001, kGearReduction);
 
   private final DCMotorSim topSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
   private final DCMotorSim bottomSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
 
-  private final PIDController controller = new PIDController(0.001, 0.0, 0.0, SIM_UPDATE_INTERVAL);
-  private final SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.0, 0.002, 0.0);
+  // Convert Phoenix 6 RPS kP to RPM units for WPILib PIDController
+  private final PIDController simPID = new PIDController(kP / 60.0, kI, kD, SIM_UPDATE_INTERVAL);
 
   private double targetVelocityRPM = 0.0;
   private boolean isRunning = false;
@@ -29,13 +30,22 @@ public class ShooterIOSim implements ShooterIO {
   public void updateInputs(ShooterIOInputs inputs) {
     double appliedVolts = 0.0;
 
-    if (isRunning && targetVelocityRPM > 0.0) {
-      double pid = controller.calculate(topSim.getAngularVelocityRPM(), targetVelocityRPM);
-      double ff = feedforward.calculate(targetVelocityRPM);
-      appliedVolts = Math.max(-12.0, Math.min(12.0, pid + ff));
+    if (isRunning) {
+      double targetRPS = targetVelocityRPM / 60.0;
+
+      // Calculate Feedforward: kS + (kV * RPS) when spinning up
+      double ffVolts = targetVelocityRPM > 0.0 ? (kS + (kV * targetRPS)) : 0.0;
+
+      // PID calculates corrective or braking voltage
+      double pidVolts = simPID.calculate(topSim.getAngularVelocityRPM(), targetVelocityRPM);
+
+      double totalVolts = ffVolts + pidVolts;
+
+      // Clamp voltage between 0.0V and 12.0V so simulated wheels NEVER spin backward
+      appliedVolts = Math.max(0.0, Math.min(12.0, totalVolts));
     }
 
-    // Top motor spins positive (CW), Bottom motor spins inverted negative (CCW)
+    // Top motor spins positive (CW), Bottom motor spins inverted (CCW)
     topSim.setInputVoltage(appliedVolts);
     bottomSim.setInputVoltage(-appliedVolts);
 
@@ -54,15 +64,18 @@ public class ShooterIOSim implements ShooterIO {
 
   @Override
   public void setVelocity(double rpm) {
+    if (!isRunning || this.targetVelocityRPM != rpm) {
+      simPID.reset();
+    }
     this.targetVelocityRPM = rpm;
     this.isRunning = true;
   }
 
   @Override
   public void stopMotor() {
-    this.isRunning = false;
+    // Keep isRunning = true with target = 0.0 RPM so closed-loop braking decelerates the wheels,
+    // while appliedVolts clamp at 0.0V prevents reverse spin.
     this.targetVelocityRPM = 0.0;
-    topSim.setInputVoltage(0.0);
-    bottomSim.setInputVoltage(0.0);
+    this.isRunning = true;
   }
 }

@@ -4,26 +4,40 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.LoggedRobot;
+
 import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
     private Command m_autonomousCommand;
 
-    private final RobotContainer m_robotContainer;
+    private RobotContainer m_robotContainer;
 
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
         .withTimestampReplay()
         .withJoystickReplay();
 
-    public Robot() {
+
+     @Override
+    public void robotInit() {
+    // Set mode BEFORE creating RobotContainer
+    Constants.currentMode = isSimulation() ? Constants.Mode.SIM : Constants.Mode.REAL;
+
+    Logger.recordMetadata("ProjectName", "E2-Red2026");
+    Logger.addDataReceiver(new NT4Publisher());
+    Logger.start();
+
         m_robotContainer = new RobotContainer();
     }
 
+    
     @Override
     public void robotPeriodic() {
         m_robotContainer.periodic();
