@@ -56,13 +56,14 @@ public class ShooterIOReal implements ShooterIO {
     topConfig.Voltage.PeakReverseVoltage = 0.0;
     bottomConfig.Voltage.PeakReverseVoltage = 0.0;
 
-    // Inversion configurations
+    // Inversion configurations cuz one wheel spins clockwise and the other counter-clockwise to shoot straight
     topConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     bottomConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-    // Apply configs to TalonFX motor controllers
+    // Apply configs to TalonFX motor controllers cuz they don't have a default config
     var statusTop = topMotor.getConfigurator().apply(topConfig, 0.050);
     var statusBottom = bottomMotor.getConfigurator().apply(bottomConfig, 0.050);
+
 
     if (!statusTop.isOK()) {
       System.err.println("Top Motor Config Error: " + statusTop.toString());
@@ -75,6 +76,7 @@ public class ShooterIOReal implements ShooterIO {
         50.0, topVolts, bottomVolts, topVelocity, bottomVelocity, topAmps, bottomAmps);
   }
 
+  // Advantage Kit
   @Override
   public void updateInputs(ShooterIOInputs inputs) {
     BaseStatusSignal.refreshAll(
@@ -92,7 +94,7 @@ public class ShooterIOReal implements ShooterIO {
 
     inputs.targetVelocityRPM = targetRPM;
   }
-
+  // Advantage Kit
   @Override
   public void setVelocity(double rpm) {
     this.targetRPM = rpm;
@@ -101,7 +103,7 @@ public class ShooterIOReal implements ShooterIO {
     topMotor.setControl(velocityRequest.withVelocity(rps));
     bottomMotor.setControl(velocityRequest.withVelocity(rps));
   }
-
+  // Advantage Kit
   @Override
   public void stopMotor() {
     this.targetRPM = 0.0;

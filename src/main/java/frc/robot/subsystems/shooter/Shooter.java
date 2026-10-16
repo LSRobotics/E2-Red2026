@@ -14,18 +14,19 @@ public class Shooter extends SubsystemBase {
     this.io = io;
   }
 
+  // Advantage Kit
   @Override
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
   }
 
-  /** Commands the shooter flywheels to run at target RPM. */
+  // Run it at target RPM 
   public Command runShooterCommand(double rpm) {
     return run(() -> io.setVelocity(rpm)).finallyDo(() -> io.stopMotor());
   }
 
-  /** Returns true if both flywheels are within tolerance of the target RPM. */
+  // Returns true if both flywheels are within tolerance of the target RPM. Could be used on shuffle board I think
   public boolean atSetpoint() {
     boolean topAtSpeed = Math.abs(inputs.topVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
     boolean bottomAtSpeed = Math.abs(inputs.bottomVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
