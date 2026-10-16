@@ -15,8 +15,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 
 public class ShooterIOReal implements ShooterIO {
-  private final TalonFX topMotor = new TalonFX(kTopMotorCanId);
-  private final TalonFX bottomMotor = new TalonFX(kBottomMotorCanId);
+  private final TalonFX rightMotor = new TalonFX(kRightMotorCanId);
+  private final TalonFX leftMotor = new TalonFX(kLeftMotorCanId);
 
   // Velocity control request explicitly set to Slot 0
   private final VelocityVoltage velocityRequest = 
@@ -24,18 +24,18 @@ public class ShooterIOReal implements ShooterIO {
           .withSlot(0)
           .withEnableFOC(false); // Set to true if using Phoenix Pro
 
-  private final StatusSignal<Voltage> topVolts = topMotor.getMotorVoltage();
-  private final StatusSignal<Voltage> bottomVolts = bottomMotor.getMotorVoltage();
-  private final StatusSignal<AngularVelocity> topVelocity = topMotor.getVelocity();
-  private final StatusSignal<AngularVelocity> bottomVelocity = bottomMotor.getVelocity();
-  private final StatusSignal<Current> topAmps = topMotor.getSupplyCurrent();
-  private final StatusSignal<Current> bottomAmps = bottomMotor.getSupplyCurrent();
+  private final StatusSignal<Voltage> rightVolts = rightMotor.getMotorVoltage();
+  private final StatusSignal<Voltage> leftVolts = leftMotor.getMotorVoltage();
+  private final StatusSignal<AngularVelocity> rightVelocity = rightMotor.getVelocity();
+  private final StatusSignal<AngularVelocity> leftVelocity = leftMotor.getVelocity();
+  private final StatusSignal<Current> rightAmps = rightMotor.getSupplyCurrent();
+  private final StatusSignal<Current> leftAmps = leftMotor.getSupplyCurrent();
 
   private double targetRPM = 0.0;
 
   public ShooterIOReal() {
-    TalonFXConfiguration topConfig = new TalonFXConfiguration();
-    TalonFXConfiguration bottomConfig = new TalonFXConfiguration();
+    TalonFXConfiguration rightConfig = new TalonFXConfiguration();
+    TalonFXConfiguration leftConfig = new TalonFXConfiguration();
 
     // Slot 0 Closed-Loop Gains
     Slot0Configs slot0 = new Slot0Configs();
@@ -45,52 +45,52 @@ public class ShooterIOReal implements ShooterIO {
     slot0.kV = kV;
     slot0.kS = kS;
 
-    topConfig.Slot0 = slot0;
-    bottomConfig.Slot0 = slot0;
+    rightConfig.Slot0 = slot0;
+    leftConfig.Slot0 = slot0;
 
     // Set Neutral Mode to Brake for active deceleration
-    topConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    bottomConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    rightConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    leftConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // Safety: Clamp Peak Reverse Voltage to 0.0V so wheels NEVER spin backward
-    topConfig.Voltage.PeakReverseVoltage = 0.0;
-    bottomConfig.Voltage.PeakReverseVoltage = 0.0;
+    rightConfig.Voltage.PeakReverseVoltage = 0.0;
+    leftConfig.Voltage.PeakReverseVoltage = 0.0;
 
     // Inversion configurations cuz one wheel spins clockwise and the other counter-clockwise to shoot straight
-    topConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-    bottomConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    rightConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    leftConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // Apply configs to TalonFX motor controllers cuz they don't have a default config
-    var statusTop = topMotor.getConfigurator().apply(topConfig, 0.050);
-    var statusBottom = bottomMotor.getConfigurator().apply(bottomConfig, 0.050);
+    var statusRight = rightMotor.getConfigurator().apply(rightConfig, 0.050);
+    var statusLeft = leftMotor.getConfigurator().apply(leftConfig, 0.050);
 
 
-    if (!statusTop.isOK()) {
-      System.err.println("Top Motor Config Error: " + statusTop.toString());
+    if (!statusRight.isOK()) {
+      System.err.println("Right Motor Config Error: " + statusRight.toString());
     }
-    if (!statusBottom.isOK()) {
-      System.err.println("Bottom Motor Config Error: " + statusBottom.toString());
+    if (!statusLeft.isOK()) {
+      System.err.println("Left Motor Config Error: " + statusLeft.toString());
     }
 
     BaseStatusSignal.setUpdateFrequencyForAll(
-        50.0, topVolts, bottomVolts, topVelocity, bottomVelocity, topAmps, bottomAmps);
+        50.0, rightVolts, leftVolts, rightVelocity, leftVelocity, rightAmps, leftAmps);
   }
 
   // Advantage Kit
   @Override
   public void updateInputs(ShooterIOInputs inputs) {
     BaseStatusSignal.refreshAll(
-        topVolts, bottomVolts, topVelocity, bottomVelocity, topAmps, bottomAmps);
+        rightVolts, leftVolts, rightVelocity, leftVelocity, rightAmps, leftAmps);
 
-    inputs.topMotorConnected = topVolts.getStatus().isOK();
-    inputs.bottomMotorConnected = bottomVolts.getStatus().isOK();
+    inputs.rightMotorConnected = rightVolts.getStatus().isOK();
+    inputs.leftMotorConnected = leftVolts.getStatus().isOK();
 
-    inputs.topAppliedVolts = topVolts.getValueAsDouble();
-    inputs.bottomAppliedVolts = bottomVolts.getValueAsDouble();
+    inputs.rightAppliedVolts = rightVolts.getValueAsDouble();
+    inputs.leftAppliedVolts = leftVolts.getValueAsDouble();
 
     // Convert RPS (Rotations Per Second) to RPM
-    inputs.topVelocityRPM = Math.abs(topVelocity.getValueAsDouble() * 60.0);
-    inputs.bottomVelocityRPM = Math.abs(bottomVelocity.getValueAsDouble() * 60.0);
+    inputs.rightVelocityRPM = Math.abs(rightVelocity.getValueAsDouble() * 60.0);
+    inputs.leftVelocityRPM = Math.abs(leftVelocity.getValueAsDouble() * 60.0);
 
     inputs.targetVelocityRPM = targetRPM;
   }
@@ -100,15 +100,15 @@ public class ShooterIOReal implements ShooterIO {
     this.targetRPM = rpm;
     double rps = rpm / 60.0; // Convert RPM to RPS for Phoenix 6
 
-    topMotor.setControl(velocityRequest.withVelocity(rps));
-    bottomMotor.setControl(velocityRequest.withVelocity(rps));
+    rightMotor.setControl(velocityRequest.withVelocity(rps));
+    leftMotor.setControl(velocityRequest.withVelocity(rps));
   }
   // Advantage Kit
   @Override
   public void stopMotor() {
     this.targetRPM = 0.0;
     // Request 0 RPS so motors use Brake mode down to 0, but PeakReverseVoltage prevents backward spin
-    topMotor.setControl(velocityRequest.withVelocity(0.0));
-    bottomMotor.setControl(velocityRequest.withVelocity(0.0));
+    rightMotor.setControl(velocityRequest.withVelocity(0.0));
+    leftMotor.setControl(velocityRequest.withVelocity(0.0));
   }
 }

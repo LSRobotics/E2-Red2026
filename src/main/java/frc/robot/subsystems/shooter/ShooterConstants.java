@@ -2,8 +2,8 @@ package frc.robot.subsystems.shooter;
 
 public final class ShooterConstants {
   // CAN IDs
-  public static final int kTopMotorCanId = 1;
-  public static final int kBottomMotorCanId = 2;
+  public static final int kRightMotorCanId = 1;
+  public static final int kLeftMotorCanId = 2;
 
   // Mechanical Configuration
   public static final double kGearReduction = 1.0; 

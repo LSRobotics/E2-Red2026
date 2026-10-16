@@ -28,10 +28,10 @@ public class Shooter extends SubsystemBase {
 
   // Returns true if both flywheels are within tolerance of the target RPM. Could be used on shuffle board I think
   public boolean atSetpoint() {
-    boolean topAtSpeed = Math.abs(inputs.topVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
-    boolean bottomAtSpeed = Math.abs(inputs.bottomVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
+    boolean rightAtSpeed = Math.abs(inputs.rightVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
+    boolean leftAtSpeed = Math.abs(inputs.leftVelocityRPM - inputs.targetVelocityRPM) <= kShooterToleranceRPM;
   
-    return inputs.targetVelocityRPM > 0.0 && topAtSpeed && bottomAtSpeed;
+    return inputs.targetVelocityRPM > 0.0 && rightAtSpeed && leftAtSpeed;
   }
 
   public void stop() {

@@ -17,8 +17,8 @@ public class ShooterIOSim implements ShooterIO {
   private final LinearSystem<N2, N1, N2> plant =
       LinearSystemId.createDCMotorSystem(DCMotor.getNeoVortex(1), 0.001, kGearReduction);
 
-  private final DCMotorSim topSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
-  private final DCMotorSim bottomSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
+  private final DCMotorSim rightSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
+  private final DCMotorSim leftSim = new DCMotorSim(plant, DCMotor.getNeoVortex(1));
 
   // Convert Phoenix 6 RPS kP to RPM units for WPILib PIDController
   private final PIDController simPID = new PIDController(kP / 60.0, kI, kD, SIM_UPDATE_INTERVAL);
@@ -37,7 +37,7 @@ public class ShooterIOSim implements ShooterIO {
       double ffVolts = targetVelocityRPM > 0.0 ? (kS + (kV * targetRPS)) : 0.0;
 
       // PID calculates corrective or braking voltage
-      double pidVolts = simPID.calculate(topSim.getAngularVelocityRPM(), targetVelocityRPM);
+      double pidVolts = simPID.calculate(rightSim.getAngularVelocityRPM(), targetVelocityRPM);
 
       double totalVolts = ffVolts + pidVolts;
 
@@ -45,20 +45,20 @@ public class ShooterIOSim implements ShooterIO {
       appliedVolts = Math.max(0.0, Math.min(12.0, totalVolts));
     }
 
-    // Top motor spins positive (CW), Bottom motor spins inverted (CCW)
-    topSim.setInputVoltage(appliedVolts);
-    bottomSim.setInputVoltage(-appliedVolts);
+    // Right motor spins positive (CW), Left motor spins inverted (CCW)
+    rightSim.setInputVoltage(appliedVolts);
+    leftSim.setInputVoltage(-appliedVolts);
 
-    topSim.update(SIM_UPDATE_INTERVAL);
-    bottomSim.update(SIM_UPDATE_INTERVAL);
+    rightSim.update(SIM_UPDATE_INTERVAL);
+    leftSim.update(SIM_UPDATE_INTERVAL);
 
     // Populate AdvantageKit logged inputs
-    inputs.topMotorConnected = true;
-    inputs.bottomMotorConnected = true;
-    inputs.topAppliedVolts = topSim.getInputVoltage();
-    inputs.bottomAppliedVolts = bottomSim.getInputVoltage();
-    inputs.topVelocityRPM = topSim.getAngularVelocityRPM();
-    inputs.bottomVelocityRPM = Math.abs(bottomSim.getAngularVelocityRPM());
+    inputs.rightMotorConnected = true;
+    inputs.leftMotorConnected = true;
+    inputs.rightAppliedVolts = rightSim.getInputVoltage();
+    inputs.leftAppliedVolts = leftSim.getInputVoltage();
+    inputs.rightVelocityRPM = rightSim.getAngularVelocityRPM();
+    inputs.leftVelocityRPM = Math.abs(leftSim.getAngularVelocityRPM());
     inputs.targetVelocityRPM = targetVelocityRPM;
   }
 
