@@ -37,6 +37,7 @@ public class RobotContainer {
   private final CommandXboxController m_driverController = new CommandXboxController(0);
 
   public RobotContainer() {
+    m_Swerve.registerTelemetry(m_telemetry::telemeterize); // Ensures swerve telemetry updates
     configureBindings();
   }
 
