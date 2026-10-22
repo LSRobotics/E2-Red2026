@@ -20,12 +20,14 @@ public final class Constants {
     REAL,
     SIM,
     REPLAY
+  
   }
   // Consise if/else statement to set Real Life or Sim.
   public static Mode currentMode = RobotBase.isReal() ? Mode.REAL : Mode.SIM;
-
+  
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
   }
+  
 }
 
