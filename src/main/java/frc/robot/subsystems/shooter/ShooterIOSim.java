@@ -21,6 +21,7 @@ public class ShooterIOSim implements ShooterIO {
 
   private final PIDController simPID = new PIDController(kP / 60.0, kI, kD, SIM_LOOP_INTERVAL);
 
+  private double currentKv = kV;
   private double targetVelocityRPM = 0.0;
   private boolean isRunning = false;
 
@@ -28,9 +29,9 @@ public class ShooterIOSim implements ShooterIO {
   public void updateInputs(ShooterIOInputs inputs) {
     double appliedVolts = 0.0;
 
-    if (isRunning) {
+    if (isRunning && targetVelocityRPM > 0.0) {
       double targetRPS = targetVelocityRPM / 60.0;
-      double ffVolts = targetVelocityRPM > 0.0 ? (kS + (kV * targetRPS)) : 0.0;
+      double ffVolts = kS + (currentKv * targetRPS);
       double pidVolts = simPID.calculate(rightSim.getAngularVelocityRPM(), targetVelocityRPM);
 
       appliedVolts = Math.max(0.0, Math.min(12.0, ffVolts + pidVolts));
@@ -45,7 +46,7 @@ public class ShooterIOSim implements ShooterIO {
     inputs.rightMotorConnected = true;
     inputs.leftMotorConnected = true;
     inputs.rightAppliedVolts = rightSim.getInputVoltage();
-    inputs.leftAppliedVolts = leftSim.getInputVoltage();
+    inputs.leftAppliedVolts = Math.abs(leftSim.getInputVoltage());
     inputs.rightVelocityRPM = rightSim.getAngularVelocityRPM();
     inputs.leftVelocityRPM = Math.abs(leftSim.getAngularVelocityRPM());
     inputs.rightCurrentAmps = rightSim.getCurrentDrawAmps();
@@ -63,8 +64,14 @@ public class ShooterIOSim implements ShooterIO {
   }
 
   @Override
+  public void setPIDFF(double kP, double kV) {
+    this.simPID.setP(kP / 60.0);
+    this.currentKv = kV;
+  }
+
+  @Override
   public void stopMotor() {
     this.targetVelocityRPM = 0.0;
-    this.isRunning = true;
+    this.isRunning = false;
   }
 }

@@ -6,11 +6,15 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
   private final ShooterIO io;
   private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
+  private final LoggedTunableNumber tunableP = new LoggedTunableNumber("Shooter/P", kP);
+  private final LoggedTunableNumber tunableV = new LoggedTunableNumber("Shooter/V", kV);
 
   private double currentTargetRPM = kShootTargetRPM;
 
@@ -28,6 +32,11 @@ public class Shooter extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
+
+    // Update PID and Feedforward gains live if edited on SmartDashboard/AdvantageScope
+    if (tunableP.hasChanged(hashCode()) || tunableV.hasChanged(hashCode())) {
+      io.setPIDFF(tunableP.get(), tunableV.get());
+    }
 
     boolean atSpeed = isAtSpeed();
     double avgActualRPM = (inputs.rightVelocityRPM + inputs.leftVelocityRPM) / 2.0;
@@ -53,7 +62,7 @@ public class Shooter extends SubsystemBase {
     ).withName("RunShooter");
   }
 
-  /** Resets target RPM back to the constant default (2000.0 RPM) */
+  /** Resets target RPM back to default (2000.0 RPM) */
   public Command resetRPMCommand() {
     return runOnce(() -> currentTargetRPM = kShootTargetRPM)
         .withName("ResetRPM");
@@ -65,7 +74,7 @@ public class Shooter extends SubsystemBase {
         .withName("AdjustRPM");
   }
 
-  /** Checks if both dual flywheel wheels are within RPM tolerance */
+  /** Checks if both flywheel wheels are within RPM tolerance */
   public boolean isAtSpeed() {
     return currentTargetRPM > 0.0
         && Math.abs(inputs.rightVelocityRPM - currentTargetRPM) <= kShooterToleranceRPM

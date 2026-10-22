@@ -25,6 +25,8 @@ public final class Constants {
   // Consise if/else statement to set Real Life or Sim.
   public static Mode currentMode = RobotBase.isReal() ? Mode.REAL : Mode.SIM;
   
+  public static final boolean tuningMode = true; // Must be true for live tuning to work
+  
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
   }

@@ -12,8 +12,6 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import frc.robot.util.LoggedTunableNumber;
-
 public class ShooterIOReal implements ShooterIO {
   private final SparkMax rightMotor = new SparkMax(kRightMotorCanId, MotorType.kBrushless);
   private final SparkMax leftMotor = new SparkMax(kLeftMotorCanId, MotorType.kBrushless);
@@ -24,39 +22,31 @@ public class ShooterIOReal implements ShooterIO {
   private final SparkClosedLoopController rightPID = rightMotor.getClosedLoopController();
   private final SparkClosedLoopController leftPID = leftMotor.getClosedLoopController();
 
-  private final SparkMaxConfig config = new SparkMaxConfig();
-
-  private final LoggedTunableNumber tunableP = new LoggedTunableNumber("Shooter/P", kP);
-  private final LoggedTunableNumber tunableV = new LoggedTunableNumber("Shooter/V", kV);
-
   private double targetVelocityRPM = 0.0;
 
   public ShooterIOReal() {
-    config.idleMode(IdleMode.kBrake);
-    config.smartCurrentLimit(kCurrentLimitAmps);
-
-    // Closed-loop gains (kV converted from RPS to RPM for REVLib)
-    config.closedLoop
-        .p(tunableP.get())
+    SparkMaxConfig rightConfig = new SparkMaxConfig();
+    rightConfig.idleMode(IdleMode.kBrake);
+    rightConfig.smartCurrentLimit(kCurrentLimitAmps);
+    rightConfig.closedLoop
+        .p(kP)
         .i(kI)
       .d(kD);
-    config.closedLoop.feedForward.kV(tunableV.get() / 60.0);
-
-    // CAN traffic optimization: slow down non-essential telemetry frames to 200ms
-    config.signals
+    rightConfig.closedLoop.feedForward.kV(kV / 60.0);
+    rightConfig.signals
         .primaryEncoderVelocityAlwaysOn(true)
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(200)
         .busVoltagePeriodMs(200)
         .outputCurrentPeriodMs(200);
+    rightConfig.inverted(false);
 
-    // Apply config to right motor
-    config.inverted(false);
-    rightMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    SparkMaxConfig leftConfig = new SparkMaxConfig();
+    leftConfig.apply(rightConfig);
+    leftConfig.inverted(true);
 
-    // Apply config to inverted left motor
-    config.inverted(true);
-    leftMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    rightMotor.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    leftMotor.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override
@@ -74,8 +64,6 @@ public class ShooterIOReal implements ShooterIO {
     inputs.leftCurrentAmps = leftMotor.getOutputCurrent();
 
     inputs.targetVelocityRPM = targetVelocityRPM;
-
-    checkTunableNumbers();
   }
 
   @Override
@@ -86,20 +74,19 @@ public class ShooterIOReal implements ShooterIO {
   }
 
   @Override
+  public void setPIDFF(double kP, double kV) {
+    SparkMaxConfig updateConfig = new SparkMaxConfig();
+    updateConfig.closedLoop.p(kP);
+    updateConfig.closedLoop.feedForward.kV(kV / 60.0);
+
+    rightMotor.configure(updateConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    leftMotor.configure(updateConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+  }
+
+  @Override
   public void stopMotor() {
     targetVelocityRPM = 0.0;
     rightMotor.stopMotor();
     leftMotor.stopMotor();
-  }
-
-  private void checkTunableNumbers() {
-    if (tunableP.hasChanged(tunableP.hashCode()) || tunableV.hasChanged(tunableV.hashCode())) {
-      config.closedLoop
-          .p(tunableP.get());
-        config.closedLoop.feedForward.kV(tunableV.get() / 60.0);
-
-        rightMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        leftMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    }
   }
 }
