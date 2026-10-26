@@ -4,6 +4,13 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
@@ -20,6 +27,9 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
+  
+    private final SendableChooser<Command> autoChooser; // bjb for pathplanner
+  
   private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
@@ -38,6 +48,11 @@ public class RobotContainer {
 
   public RobotContainer() {
     m_Swerve.registerTelemetry(m_telemetry::telemeterize); // Ensures swerve telemetry updates
+
+    // I think this Autobuilder is somewhere in the pathplanner area
+    autoChooser = AutoBuilder.buildAutoChooser();
+    SmartDashboard.putData("Auton Chooser", autoChooser);
+
     configureBindings();
   }
 
@@ -83,7 +98,11 @@ public class RobotContainer {
 }
 
   public Command getAutonomousCommand() {
-    return Commands.idle();
+
+    //Part of pathplanner setup
+    return autoChooser.getSelected();
+    
+    //return Commands.idle();
   }
 
   public void periodic() {
