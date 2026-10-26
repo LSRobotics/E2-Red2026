@@ -28,6 +28,8 @@ public class ShooterIOReal implements ShooterIO {
     SparkMaxConfig rightConfig = new SparkMaxConfig();
     rightConfig.idleMode(IdleMode.kBrake);
     rightConfig.smartCurrentLimit(kCurrentLimitAmps);
+    rightConfig.voltageCompensation(12);
+
     rightConfig.closedLoop
         .p(kP)
         .i(kI)
@@ -36,13 +38,27 @@ public class ShooterIOReal implements ShooterIO {
     rightConfig.signals
         .primaryEncoderVelocityAlwaysOn(true)
         .primaryEncoderVelocityPeriodMs(20)
-        .appliedOutputPeriodMs(200)
-        .busVoltagePeriodMs(200)
-        .outputCurrentPeriodMs(200);
+        .appliedOutputPeriodMs(20)
+        .busVoltagePeriodMs(20)
+        .outputCurrentPeriodMs(20);
     rightConfig.inverted(false);
 
     SparkMaxConfig leftConfig = new SparkMaxConfig();
-    leftConfig.apply(rightConfig);
+    leftConfig.idleMode(IdleMode.kBrake);
+    leftConfig.smartCurrentLimit(kCurrentLimitAmps);
+    leftConfig.voltageCompensation(12.0);
+
+    leftConfig.closedLoop
+        .p(kP)
+        .i(kI)
+      .d(kD);
+    leftConfig.closedLoop.feedForward.kV(kV / 60.0);
+    leftConfig.signals
+        .primaryEncoderVelocityAlwaysOn(true)
+        .primaryEncoderVelocityPeriodMs(20)
+        .appliedOutputPeriodMs(20)
+        .busVoltagePeriodMs(20)
+        .outputCurrentPeriodMs(20);
     leftConfig.inverted(true);
 
     rightMotor.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
