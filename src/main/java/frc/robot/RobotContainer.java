@@ -28,7 +28,7 @@ import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
   
-    private final SendableChooser<Command> autoChooser; // bjb for pathplanner
+  private final SendableChooser<Command> autoChooser; // bjb for pathplanner
   
   private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
