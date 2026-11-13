@@ -30,7 +30,7 @@ public class RobotContainer {
   
   private final SendableChooser<Command> autoChooser; // bjb for pathplanner
   
-  private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+  private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
   // Subsystems initializeds
@@ -90,9 +90,9 @@ public class RobotContainer {
   // Default Swerve Request
   m_Swerve.setDefaultCommand(
       m_Swerve.applyRequest(() -> drive
-          .withVelocityX(-m_driverController.getLeftY() * MaxSpeed)
-          .withVelocityY(-m_driverController.getLeftX() * MaxSpeed)
-          .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate)
+          .withVelocityX(m_driverController.getLeftY() * MaxSpeed)
+          .withVelocityY(m_driverController.getLeftX() * MaxSpeed)
+          .withRotationalRate(m_driverController.getRightX() * MaxAngularRate)
       )
   );
 }
