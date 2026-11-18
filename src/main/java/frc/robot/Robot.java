@@ -5,6 +5,7 @@
 package frc.robot;
 
 import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.LoggedRobot;
 
@@ -31,6 +32,7 @@ public class Robot extends LoggedRobot {
     Constants.currentMode = isSimulation() ? Constants.Mode.SIM : Constants.Mode.REAL;
 
     Logger.recordMetadata("ProjectName", "E2-Red2026");
+    Logger.addDataReceiver(new WPILOGWriter());
     Logger.addDataReceiver(new NT4Publisher());
     Logger.start();
 
